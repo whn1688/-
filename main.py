@@ -1,7 +1,9 @@
 import sys
+from PyQt5 import QtCore
+from PyQt5.QtCore import QAbstractTableModel, Qt, QAbstractItemModel
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog
 from gui import UserInterface, Storagein, Storageout
-
+from SqliteMethods import SqliteMethods as sm
 
 class Example(QMainWindow):
     def __init__(self):
@@ -9,11 +11,12 @@ class Example(QMainWindow):
         super().__init__()
         self.ui = UserInterface.Ui_MainWindow()
         self.ui.setupUi(self)
+        self.dialog1 = Dialog_Storagein()
+        self.dialog2 = Dialog_Storageout()
+        self.db = sm("./northwindEF.db")
         # 初始化
         self.init_ui()
 
-        self.dialog1 = Dialog_Storagein()
-        self.dialog2 = Dialog_Storageout()
 
     # ui初始化
     def init_ui(self):
@@ -29,8 +32,22 @@ class Example(QMainWindow):
         self.ui.mBtn_StorageOut.clicked.connect(lambda: self.mbuttonClicked(btnName="出库"))
         self.ui.mBtn_StorageIn.clicked.connect(lambda: self.mbuttonClicked(btnName="入库"))
 
+        # 2.数据库操作
+        table_list = self.db.ReadTableList()
+        column_list = self.db.ColumnsList(table_list["name"][8])
+        print(column_list.values)
+        self.table_list = table_list["name"]
+        datas = []
+        for i in table_list["name"]:
+            datas.append(self.db.SelectWholeTable(i))
+        self.dataset = datas
+        data = self.db.SelectWholeTable(table_list["name"][8])
+
+        model = PandasModel(data,column_list)
+        self.ui.tableView.setModel(model)
+
         self.show()
-    # 按钮点击操作函数
+#按钮点击事件函数
     def mbuttonClicked(self, btnName=""):
 
         if btnName == "储位详情":
@@ -46,47 +63,54 @@ class Example(QMainWindow):
         elif btnName == "其他信息维护":
             self.ui.stackedWidget.setCurrentIndex(5)
         elif btnName == "出库":
-            #self.dialog2.show()
             self.dialog2.exec_()
-
-            #调用/创建出库界面
         elif btnName == "入库":
-            #self.dialog1.show()
             self.dialog1.exec_()
-            # 调用/创建入库界面
 
-    def exitFuc(self):
-        pass
-
+#入库界面
 class Dialog_Storagein(QDialog):
     def __init__(self):
         self.app = QApplication(sys.argv)
         super().__init__()
         self.dialog_in = Storagein.Ui_Dialog()
         self.dialog_in.setupUi(self)
-        # 初始化
-        #self.init_ui()
 
-        # ui初始化
-    def init_ui(self):
-    # 初始化方法，这里可以写按钮绑定等的一些初始函数
-        self.show()
-    # 1.按钮点击操作
+#出库界面
 class Dialog_Storageout(QDialog):
     def __init__(self):
         self.app = QApplication(sys.argv)
         super().__init__()
         self.dialog_out = Storageout.Ui_Dialog()
         self.dialog_out.setupUi(self)
-        # 初始化
-        # self.init_ui()
 
-        # ui初始化
+#表格显示模板
+#说明：表格需要一个模板来填充显示
+class PandasModel(QAbstractTableModel):
+    def __init__(self, data, column_list, parent=None):
+        QAbstractTableModel.__init__(self, parent)
+        self._data = data
+        self._column_list = column_list
 
-    def init_ui(self):
-        # 初始化方法，这里可以写按钮绑定等的一些初始函数
-        self.show()
-    # 1.按钮点击操作
+    def rowCount(self, parent=None):
+        return len(self._data.values)
+
+    def columnCount(self, parent=None):
+        return self._data.columns.size
+
+#行首列首设置
+    def headerData(self, section, orientation, role) :
+        if role == Qt.DisplayRole:
+            if orientation == Qt.Horizontal :
+                 return self._column_list[section]
+            elif orientation == Qt.Vertical:
+                 return section
+
+    def data(self, index, role=Qt.DisplayRole):
+        if index.isValid():
+            if role == Qt.DisplayRole:
+                return QtCore.QVariant(str(
+                    self._data.values[index.row()][index.column()]))
+        return QtCore.QVariant()
 
 # 程序入口
 if __name__ == '__main__':
