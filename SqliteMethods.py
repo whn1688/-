@@ -1,11 +1,29 @@
 import pandas as pd
+import os
 import sqlite3
+import Dbmessage as dbm
+
 
 class SqliteMethods():
-
     def __init__(self, database_path):
-        self.cursor = sqlite3.connect(database_path)
+        self._database_path = database_path
+        self._database_path_exist = os.path.exists(self._database_path)
+        if self._database_path_exist ==True:
+            self.cursor = sqlite3.connect(self._database_path)
+        else:
+            self.Creatdb()
 
+#创建数据库，填充table与column
+    def Creatdb(self):
+        self.cursor = sqlite3.connect(self._database_path)
+        #for value in table_names:
+        i = 0
+        for value in dbm.table_names.keys():
+            self.cursor.execute("create table {} ({}); ".format(dbm.table_names[value],dbm.all_columns_list[i]))
+            i = i + 1
+
+    def CreatTable(self):
+        pass
     def ChangeFormat(self,message):
         if type(message) == type(str()):
             return "'{}'".format(message)
@@ -61,7 +79,6 @@ class SqliteMethods():
         columnslist = db.columns
         return columnslist
 
-
     #按规则删除
     def DeleteRowByRule(self, table_name, rule):
         self.cursor.execute("delete from {} where {}".format(table_name, rule))
@@ -69,11 +86,11 @@ class SqliteMethods():
         return "操作成功"
 
 if __name__ == "__main__":
-    db_path = "./database/DG#1.db"
+    db_path = "./database/DG.db"
     db = SqliteMethods(db_path)
     l = db.InsertRowByRule(
-        "FEATURE_THRESHOLD_LIST",
-        "1,2,3,4,5,6,7,8,9,10,11,12,13,14,151,16"
+        "User_info",
+        "'admin1','123456','1'"
     )
 
 

@@ -1,0 +1,15 @@
+<RCC>
+  <qresource prefix="img">
+    <file>icon/warehousePic.jpeg</file>
+    <file>icon/1.svg</file>
+    <file>icon/additemNum.svg</file>
+    <file>icon/addothers.svg</file>
+    <file>icon/addstation.svg</file>
+    <file>icon/icon.svg</file>
+    <file>icon/searching.svg</file>
+    <file>icon/setting.svg</file>
+    <file>icon/storage.svg</file>
+    <file>icon/storagein.svg</file>
+    <file>icon/storageout.svg</file>
+  </qresource>
+</RCC>
